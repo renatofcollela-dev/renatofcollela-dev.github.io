@@ -1,106 +1,18 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Centro de Comando</title><style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{font-family:'Google Sans',Roboto,system-ui,-apple-system,sans-serif;background:#f8f9fa;color:#202124;min-height:100vh}
-header{background:#fff;border-bottom:1px solid #dadce0;padding:14px 18px;position:sticky;top:0;z-index:20}
-.hrow{display:flex;align-items:center;gap:10px;max-width:860px;margin:0 auto}
-.logo{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1a73e8,#8430ce);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:15px}
-header h1{font-size:17px;font-weight:500}
-header small{color:#5f6368;font-size:11px;display:block;font-weight:400}
-.live{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:#1e8e3e;font-weight:500;text-align:right}
-.live i{width:8px;height:8px;border-radius:50%;background:#1e8e3e;display:block;animation:pu 2s infinite;flex-shrink:0}
-.live.off{color:#5f6368}
-.live.off i{background:#9aa0a6;animation:none}
-@keyframes pu{50%{opacity:.35}}
-.tabs{display:flex;background:#fff;border-bottom:1px solid #dadce0;overflow-x:auto;position:sticky;top:59px;z-index:19;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tab{padding:12px 14px;text-align:center;font-size:13px;font-weight:500;color:#5f6368;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
-.tab.on{color:#1a73e8;border-bottom-color:#1a73e8}
-.tab b{background:#d93025;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:5px;font-weight:500}
-main{padding:16px;max-width:860px;margin:0 auto;padding-bottom:48px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.stat{background:#fff;border:1px solid #dadce0;border-radius:14px;padding:14px}
-.stat b{font-size:24px;font-weight:500;color:#1a73e8;display:block}
-.stat span{font-size:11.5px;color:#5f6368}
-.stat.warn b{color:#d93025}.stat.ok b{color:#1e8e3e}
-.card{background:#fff;border:1px solid #dadce0;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(60,64,67,.06)}
-.card h3{font-size:14.5px;font-weight:500;margin-bottom:5px}
-.card p{font-size:13px;color:#5f6368;line-height:1.5}
-.chip{display:inline-block;font-size:10.5px;font-weight:500;padding:3px 10px;border-radius:12px;margin-bottom:8px}
-.chip.f{background:#fce8e6;color:#d93025}.chip.t{background:#e8f0fe;color:#1a73e8}.chip.a{background:#fef7e0;color:#b06000}.chip.ok{background:#e6f4ea;color:#1e8e3e}
-.btns{display:flex;gap:10px;margin-top:12px}
-button{flex:1;padding:13px;border:none;border-radius:24px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit}
-.ap{background:#1a73e8;color:#fff}.ne{background:#fff;color:#d93025;border:1px solid #dadce0}
-textarea,input.search{width:100%;border:1px solid #dadce0;border-radius:10px;padding:11px;font-size:13px;font-family:inherit;background:#fff}
-textarea{margin-top:10px;resize:vertical;min-height:44px;background:#f8f9fa}
-input.search{margin-bottom:12px;border-radius:24px;padding-left:16px}
-.bar{background:#e8eaed;border-radius:8px;height:8px;overflow:hidden;margin:7px 0}
-.bar i{display:block;height:100%;background:#1a73e8;border-radius:8px;transition:width .4s}
-.bar.g i{background:#1e8e3e}
-.row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f1f3f4;font-size:13px}
-.row:last-child{border:none}
-.row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.row .mt{color:#9aa0a6;font-size:11px;white-space:nowrap}
-.tag{font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px;white-space:nowrap}
-.tag.v{background:#e6f4ea;color:#1e8e3e}.tag.p{background:#fef7e0;color:#b06000}
-.empty{text-align:center;color:#5f6368;padding:44px 16px;font-size:14px}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#202124;color:#fff;padding:12px 22px;border-radius:24px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:99}
-.toast.show{opacity:1}
-.muted{font-size:11px;color:#9aa0a6;margin-top:8px}
-.pct{float:right;font-weight:500;color:#1a73e8;font-size:13px}
-.sec{font-size:12px;font-weight:500;color:#5f6368;text-transform:uppercase;letter-spacing:.6px;margin:18px 4px 10px}
-.pulse{background:#e6f4ea;border:1px solid #ceead6;border-radius:14px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#137333;display:flex;align-items:center;gap:8px}
-.pulse.off{background:#f1f3f4;border-color:#dadce0;color:#5f6368}
-.pulse i{width:9px;height:9px;border-radius:50%;background:#1e8e3e;flex-shrink:0;animation:pu 2s infinite}
-.pulse.off i{background:#9aa0a6;animation:none}
-</style></head><body>
-<header><div class="hrow"><div class="logo">C</div><div><h1>Centro de Comando</h1><small>Painel operacional</small></div><div class="live" id="live"><i></i>CONECTANDO&#8230;</div></div></header>
-<div class="tabs" id="tabs"></div>
-<main id="main"><div class="empty">Carregando o sistema&#8230;</div></main>
-<div class="toast" id="toast"></div>
-<script>
-var K=new URLSearchParams(location.search).get('k');
-var FN='https://qxfyduqmuemdttrijukg.supabase.co/functions/v1/cockpit';
-var S=null,TAB='VIS\u00c3O',Q='';
-var AGDESC={'kronos-vetorizar':'Vetorizador \u2014 torna todo o conhecimento pesquis\u00e1vel por sem\u00e2ntica','kronos-agente-claude-01':'Agente Claude 01 \u2014 relat\u00f3rio di\u00e1rio do estado do sistema','kronos-auditor-falhas':'Auditor \u2014 varre falhas abertas, inten\u00e7\u00f5es paradas e regras sem crivo','kronos-acervo-loader':'Carregador de acervo \u2014 miss\u00e3o cumprida e auto-desligado'};
-var AGHORA={'*/15 * * * *':'a cada 15 min','0 11 * * *':'todo dia \u00e0s 08:00 (Bras\u00edlia)','30 10 * * *':'todo dia \u00e0s 07:30 (Bras\u00edlia)','* * * * *':'a cada 1 min'};
-function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2200)}
-function load(){fetch(FN+'?k='+K+'&data=1').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){S=j;render()}).catch(function(){document.getElementById('main').innerHTML='<div class="empty">N\u00e3o consegui ler o banco agora. Puxe para recarregar.</div>'})}
-function vivo(){if(!S)return;var tr=S.tempo_real||{};var lv=document.getElementById('live');var ca=tr.consultas_ativas||0;var um=(tr.ultimo_sinal_min==null?9999:tr.ultimo_sinal_min);
- if(ca>0){lv.className='live';lv.innerHTML='<i></i>CLAUDE TRABALHANDO AGORA'}
- else if(um<=10){lv.className='live';lv.innerHTML='<i></i>ATIVO \u00b7 sinal h\u00e1 '+um+' min'}
- else{lv.className='live off';lv.innerHTML='<i></i>EM ESPERA \u00b7 estado salvo'}}
-function tabs(){var g=(S&&S.progresso)||{};var T=[['VIS\u00c3O',0],['APROVAR',g.aprov_pendentes||0],['AGENTES',0],['ARQUIVOS',0],['TAREFAS',0],['FALHAS',g.falhas_abertas||0],['COBERTURA',0]];
- document.getElementById('tabs').innerHTML=T.map(function(t){return '<div class="tab '+(t[0]===TAB?'on':'')+'" onclick="go(\''+t[0]+'\')">'+t[0]+(t[1]?'<b>'+t[1]+'</b>':'')+'</div>'}).join('')}
-function render(){tabs();vivo();var m=document.getElementById('main');var g=S.progresso||{};var tr=S.tempo_real||{};var h='';
-if(TAB==='VIS\u00c3O'){var vp=g.conhecimento?Math.round(g.vetorizados/g.conhecimento*100):0;var ca=tr.consultas_ativas||0;var um=(tr.ultimo_sinal_min==null?null:tr.ultimo_sinal_min);
- h=(ca>0?'<div class="pulse"><i></i><span><b>Claude est\u00e1 operando o banco neste momento.</b> Pode fechar esta tela \u2014 nada se perde, tudo fica gravado aqui.</span></div>':'<div class="pulse off"><i></i><span>Nenhuma opera\u00e7\u00e3o rodando agora. \u00daltimo sinal gravado: '+esc(tr.ultimo_sinal_em||'\u2014')+(um!=null?' (h\u00e1 '+um+' min)':'')+' \u00b7 estado 100% salvo no banco.</span></div>')
- +'<div class="grid">'
- +'<div class="stat"><b>'+(g.conhecimento||0)+'</b><span>itens de conhecimento</span></div>'
- +'<div class="stat ok"><b>'+vp+'%</b><span>vetorizado ('+(g.vetorizados||0)+'/'+(g.conhecimento||0)+')</span></div>'
- +'<div class="stat"><b>'+(g.agentes_ativos||0)+'</b><span>agentes trabalhando 24/7</span></div>'
- +'<div class="stat'+((g.aprov_pendentes||0)>0?' warn':'')+'"><b>'+(g.aprov_pendentes||0)+'</b><span>aprova\u00e7\u00f5es esperando voc\u00ea</span></div>'
- +'<div class="stat'+((g.falhas_abertas||0)>0?' warn':' ok')+'"><b>'+(g.falhas_abertas||0)+'</b><span>falhas abertas</span></div>'
- +'<div class="stat"><b>'+(g.tarefas_abertas||0)+'</b><span>tarefas em andamento</span></div>'
- +'<div class="stat"><b>'+(g.cobertura_media||0)+'%</b><span>cobertura m\u00e9dia do sistema</span></div>'
- +'<div class="stat ok"><b>'+(g.tarefas_concluidas||0)+'</b><span>tarefas conclu\u00eddas</span></div></div>'
- +'<div class="sec">\u00daltimos acontecimentos</div><div class="card">'+((S.eventos||[]).map(function(e){return '<div class="row"><div class="nm">'+esc(e.texto)+'</div><div class="mt">'+esc(e.quando)+'</div></div>'}).join('')||'<p>Sem eventos.</p>')+'</div>'}
-if(TAB==='APROVAR'){var l=(S.aprovacoes||[]).filter(function(a){return a.status==='pendente'});
- h=l.length?l.map(function(a){return '<div class="card"><span class="chip a">DECIS\u00c3O PENDENTE</span><h3>'+esc(a.titulo)+'</h3><p>'+esc(a.descricao||'')+'</p>'+(a.recomendacao?'<p style="margin-top:8px"><b style="color:#1a73e8">Recomenda\u00e7\u00e3o de elite:</b> '+esc(a.recomendacao)+'</p>':'')+'<textarea id="j'+a.id+'" placeholder="Justificativa (opcional)"></textarea><div class="btns"><button class="ne" onclick="dec(\''+a.id+'\',\'negada\')">Negar</button><button class="ap" onclick="dec(\''+a.id+'\',\'aprovada\')">Aprovar</button></div></div>'}).join(''):'<div class="empty">Nenhuma aprova\u00e7\u00e3o pendente \u2713</div>'}
-if(TAB==='AGENTES'){var l=S.agentes||[];
- h='<div class="card"><h3>Sua equipe aut\u00f4noma</h3><p>'+l.filter(function(a){return a.ativo}).length+' agentes ativos rodando dentro do banco, 24/7, sem depender de ningu\u00e9m online.</p></div>'
- +l.map(function(a){return '<div class="card"><span class="chip '+(a.ativo?'ok':'t')+'">'+(a.ativo?'ATIVO':'ENCERRADO')+'</span><h3>'+esc(a.nome)+'</h3><p>'+esc(AGDESC[a.nome]||'Agente do sistema')+'</p><p class="muted">Agenda: '+esc(AGHORA[a.agenda]||a.agenda)+(a.ultima_execucao?' \u00b7 \u00daltima execu\u00e7\u00e3o: '+esc(a.ultima_execucao)+' ('+esc(a.ultimo_status||'')+')':' \u00b7 ainda n\u00e3o executou')+'</p></div>'}).join('')}
-if(TAB==='ARQUIVOS'){var l=(S.arquivos||[]).filter(function(f){return !Q||f.tema.toLowerCase().indexOf(Q)>-1});var nv=(S.arquivos||[]).filter(function(f){return !f.vetorizado}).length;
- h='<input class="search" placeholder="Buscar documento\u2026" value="'+esc(Q)+'" oninput="Q=this.value.toLowerCase();render();this.focus();var v=this.value;this.value=\'\';this.value=v">'
- +'<div class="card"><h3>'+(S.arquivos||[]).length+' documentos no banco da verdade</h3><p>'+((S.arquivos||[]).length-nv)+' vetorizados \u00b7 '+nv+' aguardando o vetorizador (roda a cada 15 min)</p></div>'
- +'<div class="card">'+(l.map(function(f){return '<div class="row"><div class="nm">'+esc(f.tema)+'</div><div class="mt">'+Math.round(f.chars/1000)+'k \u00b7 '+esc(f.data)+'</div><span class="tag '+(f.vetorizado?'v':'p')+'">'+(f.vetorizado?'vetorizado':'pendente')+'</span></div>'}).join('')||'<p>Nada encontrado.</p>')+'</div>'}
-if(TAB==='TAREFAS'){var l=S.tarefas||[];h=l.length?l.map(function(t){return '<div class="card"><span class="chip '+(t.status==='concluida'?'ok':'t')+'">'+esc(t.status)+'</span><h3>'+esc(t.codigo)+(t.titulo?' \u2014 '+esc(t.titulo):'')+'</h3><p>'+esc(t.evidencia||'')+'</p></div>'}).join(''):'<div class="empty">Sem tarefas</div>'}
-if(TAB==='FALHAS'){var l=S.falhas||[];h='<div class="card"><h3>Sistema antifr\u00e1gil</h3><p>Cada falha vira regra permanente. Nenhuma se fecha por declara\u00e7\u00e3o \u2014 s\u00f3 com evid\u00eancia.</p></div>'+(l.length?l.map(function(f){return '<div class="card"><span class="chip '+(f.status==='aberta'?'f':'ok')+'">'+esc(f.severidade||'')+' \u00b7 '+esc(f.status)+'</span><h3>'+esc(f.falha||'')+'</h3><p>'+esc(f.correcao||'')+'</p></div>'}).join(''):'<div class="empty">Sem falhas \u2713</div>')}
-if(TAB==='COBERTURA'){h='<div class="card"><h3>O que o sistema j\u00e1 contempla</h3><p>Cobertura m\u00e9dia: <b style="color:#1a73e8">'+(g.cobertura_media||0)+'%</b> \u00b7 Inclui Empresa M\u00e3e (Core) e Empresa Filha (SCPs) \u00b7 ajust\u00e1vel por voc\u00ea a qualquer momento.</p></div>'
- +(S.cobertura||[]).map(function(c){return '<div class="card"><span class="pct">'+c.pct+'%</span><h3>'+esc(c.area)+'</h3><div class="bar '+(c.pct>=75?'g':'')+'"><i style="width:'+c.pct+'%"></i></div><p>'+esc(c.fontes||'')+'</p><p class="muted">'+esc(c.nota||'')+'</p></div>'}).join('')}
-m.innerHTML=h}
-function go(t){TAB=t;render();window.scrollTo(0,0)}
-function dec(id,st){var el=document.getElementById('j'+id);var j=el?el.value:'';
- fetch(FN+'?k='+K+'&decide=1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:st,just:j})}).then(function(r){if(r.ok){toast(st==='aprovada'?'Aprovado \u2713':'Negado');load()}else toast('Erro \u2014 tente de novo')})}
-function esc(s){return String(s==null?'':s).replace(/[<>&"]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]})}
-load();setInterval(load,15000);
-</script></body></html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#07080B" />
+<title>KRONOS · Centro de Comando</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@110,400..900&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>html,body{background:#07080B;margin:0}</style>
+  <script type="module" crossorigin src="./assets/index-DaCM-jW6.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-B_XyeNak.css">
+</head>
+<body>
+<div id="root"></div>
+</body>
+</html>
