@@ -129,14 +129,13 @@ dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
 <div class="appbar">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="74" fill="none" stroke="#E0A93E" stroke-width="3" opacity=".55"/><path d="M78 56 v88 M78 100 L124 56 M84 95 L126 144" stroke="#E0A93E" stroke-width="9" fill="none" stroke-linecap="round"/></svg></div>
-    <div><h1>KRONOS</h1><div class="sub">Centro de Comando · v8</div></div>
+    <div><h1>KRONOS</h1><div class="sub">Centro de Comando · v9</div></div>
   </div>
   <div class="status"><span class="dot load" id="dot"></span><span id="stxt">conectando…</span></div>
 </div>
 
 <div class="wrap">
   <section class="view on" id="v-home">
-    <button onclick="micCheck()" style="width:100%;padding:13px;margin:4px 0 10px;border-radius:12px;background:rgba(224,169,62,.12);color:var(--primary);border:1px solid rgba(224,169,62,.4);font-weight:700;font-size:13px">🎙 Testar microfone ao vivo (Passo 0)</button>
     <div id="home-body"><div class="skel"></div><div class="stats"><div class="skel"></div><div class="skel"></div></div></div>
   </section>
   <section class="view" id="v-aprov">
@@ -430,12 +429,14 @@ async function startVoice(){
  const tools=[{functionDeclarations:[{name:'consultar_banco',description:'Consulta o banco da verdade do KRONOS e retorna dados reais. Use SEMPRE antes de afirmar qualquer fato sobre o sistema.',parameters:{type:'OBJECT',properties:{area:{type:'STRING',description:'um de: estado, pendencias, decisoes, falhas, agentes, cobertura'}},required:['area']}}]}];
  const sys='Voce e o KRONOS, sistema de orquestracao soberano, conversando por voz em portugues do Brasil com Renato. Seja conciso, direto, respeitoso e pratico. REGRA ABSOLUTA: nunca invente dados; antes de afirmar qualquer fato sobre o sistema, chame a ferramenta consultar_banco e responda apenas com o que ela retornar. Voce LE e PROPOE; nunca executa acao irreversivel (dinheiro, contrato, publicar) — para isso, oriente Renato a usar o toque no painel.';
  try{const ai=new GoogleGenAI({apiKey:token,httpOptions:{apiVersion:'v1alpha'}});
-  vsession=await ai.live.connect({model,config:{responseModalities:[Modality.AUDIO],systemInstruction:sys,tools},callbacks:{
+  vsession=await ai.live.connect({model,config:{responseModalities:[Modality.AUDIO],systemInstruction:sys,tools,inputAudioTranscription:{},outputAudioTranscription:{}},callbacks:{
    onopen:()=>{vstat('🟢 ouvindo… pode falar');vlog('conectado');},
    onmessage:async msg=>{try{
      const mt=msg.serverContent&&msg.serverContent.modelTurn;
      if(mt&&mt.parts)for(const p of mt.parts){if(p.inlineData&&p.inlineData.data)playPcm(p.inlineData.data);}
      if(msg.serverContent&&msg.serverContent.interrupted){stopPlay();vstat('🟢 ouvindo…');}
+     if(msg.serverContent&&msg.serverContent.inputTranscription&&msg.serverContent.inputTranscription.text)vlog('🗣️ você: '+msg.serverContent.inputTranscription.text);
+     if(msg.serverContent&&msg.serverContent.outputTranscription&&msg.serverContent.outputTranscription.text)vlog('🤖 KRONOS: '+msg.serverContent.outputTranscription.text);
      if(msg.toolCall&&msg.toolCall.functionCalls){const rs=[];for(const fc of msg.toolCall.functionCalls){const a=(fc.args&&fc.args.area)||'estado';vlog('🔎 consultando: '+a);const res=await consultar(a);rs.push({id:fc.id,name:fc.name,response:{result:res}});}vsession.sendToolResponse({functionResponses:rs});}
      if(msg.serverContent&&msg.serverContent.turnComplete){if(srcs.length===0)vstat('🟢 ouvindo…');}
    }catch(e){vlog('erro msg: '+(e.message||e));}},
