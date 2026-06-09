@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#faf9f5">
-<title>KRONOS · v12</title>
+<title>KRONOS · v13</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -56,7 +56,7 @@ footer{flex:none;padding:8px 14px calc(10px + env(safe-area-inset-bottom,0px));b
 <footer>
   <div class="bar">
     <input id="txt" placeholder="Pergunte ao KRONOS…" autocomplete="off">
-    <button class="ic" id="mute" title="mudo" style="display:none"><span class="material-symbols-rounded">mic_off</span></button>
+    <button class="mic" id="send" aria-label="enviar" style="display:none"><span class="material-symbols-rounded">arrow_upward</span></button>
     <button class="mic" id="mic" aria-label="microfone"><span class="material-symbols-rounded">mic</span></button>
   </div>
   <div class="hint">toque = conversa contínua · segure = walkie-talkie · digite e Enter</div>
@@ -76,11 +76,14 @@ function clearEmpty(){const e=$('#empty');if(e)e.remove();}
 function addUser(t){clearEmpty();const d=document.createElement('div');d.className='msg u';d.innerHTML='<div class="tx"></div>';d.querySelector('.tx').textContent=t;thread.appendChild(d);scroll();return d;}
 function newBot(){clearEmpty();const d=document.createElement('div');d.className='msg b';d.innerHTML='<div class="nm">KRONOS</div><div class="tx"></div>';thread.appendChild(d);scroll();return d;}
 function addCards(title,rows){clearEmpty();const d=document.createElement('div');d.className='blk';let h='<div class="h">'+esc(title)+'</div><div class="bd">';rows.forEach(r=>{h+='<div class="rw"><span>'+esc(r[0])+'</span><span class="v">'+esc(r[1])+'</span></div>';});h+='</div>';d.innerHTML=h;thread.appendChild(d);scroll();}
-function addImage(url,cap){clearEmpty();const d=document.createElement('div');d.className='blk';d.innerHTML='<img src="'+esc(url)+'" alt="">'+(cap?'<div class="cap">'+esc(cap)+'</div>':'');thread.appendChild(d);scroll();}
+function addImage(url,cap){clearEmpty();return new Promise(function(res){var d=document.createElement('div');d.className='blk';var im=new Image();im.alt='';im.style.width='100%';im.style.display='block';im.onload=function(){d.appendChild(im);if(cap){var c=document.createElement('div');c.className='cap';c.textContent=cap;d.appendChild(c);}thread.appendChild(d);scroll();res(true);};im.onerror=function(){res(false);};im.src=url;});}
+function addVideo(url){clearEmpty();var id=null;var m=/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/.exec(url||'');if(m)id=m[1];var d=document.createElement('div');d.className='blk';if(id){d.innerHTML='<iframe width="100%" height="190" src="https://www.youtube.com/embed/'+id+'" frameborder="0" allow="accelerometer;encrypted-media;picture-in-picture" allowfullscreen style="display:block;border:0"></iframe>';}else{d.innerHTML='<video src="'+esc(url)+'" controls style="width:100%;display:block"></video>';}thread.appendChild(d);scroll();}
+function addLink(url,label){clearEmpty();var d=document.createElement('div');d.className='blk';d.innerHTML='<a href="'+esc(url)+'" target="_blank" rel="noopener" style="display:block;padding:13px;color:var(--primary);font-weight:600;text-decoration:none">'+esc(label||url)+' ↗</a>';thread.appendChild(d);scroll();}
 function addChart(title,labels,data){clearEmpty();const d=document.createElement('div');d.className='blk';d.innerHTML='<div class="h">'+esc(title)+'</div><div class="bd"><canvas height="160"></canvas></div>';thread.appendChild(d);try{new Chart(d.querySelector('canvas'),{type:'bar',data:{labels:labels,datasets:[{data:data,backgroundColor:'#cc6f4e',borderRadius:4}]},options:{indexAxis:'y',responsive:true,plugins:{legend:{display:false}},scales:{x:{grid:{display:false}},y:{grid:{display:false}}}}});}catch(e){}scroll();}
 async function getState(){const r=await fetch(GW+'?data=2&k='+encodeURIComponent(K));return await r.json();}
 async function tool(name,args){
-  if(name==='buscar_imagem'){try{const q=(args.consulta||'').trim();const r=await fetch('https://pt.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(q));const j=await r.json();const url=(j.originalimage&&j.originalimage.source)||(j.thumbnail&&j.thumbnail.source);if(url){addImage(url,j.title||q);return{ok:true,titulo:j.title,resumo:(j.extract||'').slice(0,180)};}return{ok:false,erro:'sem imagem'};}catch(e){return{ok:false,erro:String(e)};}}
+  if(name==='mostrar_video'){var vu=(args.url||'').trim();if(vu){addVideo(vu);return{ok:true};}var vq=(args.consulta||'').trim();if(vq){addLink('https://www.youtube.com/results?search_query='+encodeURIComponent(vq),'Abrir vídeos de "'+vq+'" no YouTube');return{ok:true,nota:'abri busca no YouTube'};}return{ok:false,erro:'sem url ou consulta'};}
+  if(name==='buscar_imagem'){try{const q=(args.consulta||'').trim();const r=await fetch('https://pt.wikipedia.org/api/rest_v1/page/summary/'+encodeURIComponent(q));const j=await r.json();const url=(j.originalimage&&j.originalimage.source)||(j.thumbnail&&j.thumbnail.source);if(url){const okimg=await addImage(url,j.title||q);return okimg?{ok:true,titulo:j.title,resumo:(j.extract||'').slice(0,160)}:{ok:false,erro:'imagem nao carregou'};}return{ok:false,erro:'sem imagem para essa busca'};}catch(e){return{ok:false,erro:String(e)};}}
   try{
     const s=await getState();
     if(name==='mostrar_cartoes'){const a=(args.area||'estado');
@@ -124,12 +127,13 @@ async function connect(){
   const tools=[{functionDeclarations:[
     {name:'mostrar_cartoes',description:'Mostra dados reais do banco como cartoes na tela. Use quando Renato pedir para VER estado, pendencias, decisoes, falhas, agentes ou cobertura.',parameters:{type:'OBJECT',properties:{area:{type:'STRING',description:'estado|pendencias|decisoes|falhas|agentes|cobertura'}},required:['area']}},
     {name:'gerar_grafico',description:'Desenha um grafico dos dados reais na tela. Use quando Renato pedir um grafico ou indicador visual.',parameters:{type:'OBJECT',properties:{area:{type:'STRING',description:'cobertura|falhas|tarefas'}},required:['area']}},
-    {name:'buscar_imagem',description:'Busca uma imagem na web (Wikipedia) e mostra na tela. Use quando Renato pedir para VER uma imagem de algo.',parameters:{type:'OBJECT',properties:{consulta:{type:'STRING',description:'o que buscar'}},required:['consulta']}}
+    {name:'buscar_imagem',description:'Busca uma imagem na web (Wikipedia) e mostra na tela. Use quando Renato pedir para VER uma imagem de algo.',parameters:{type:'OBJECT',properties:{consulta:{type:'STRING',description:'o que buscar'}},required:['consulta']}},
+    {name:'mostrar_video',description:'Mostra um video na tela. Passe url do YouTube/.mp4 se souber; senao consulta para abrir a busca.',parameters:{type:'OBJECT',properties:{url:{type:'STRING',description:'url do video'},consulta:{type:'STRING',description:'tema do video'}}}}
   ]}];
   const sys='Voce e o KRONOS, sistema soberano, falando portugues do Brasil com Renato numa unica tela conversacional. Seja conciso e direto. NUNCA invente: para qualquer fato do sistema, chame mostrar_cartoes ou gerar_grafico (dados reais do banco) antes de afirmar. Quando Renato pedir para VER algo (indicador, grafico, pendencias, imagem), CHAME a ferramenta certa para renderizar na tela e narre curto. Voce LE e PROPOE; nunca executa acao irreversivel (aprovar, publicar, dinheiro) — oriente o rito.';
   try{
     ai=new GoogleGenAI({apiKey:token,httpOptions:{apiVersion:'v1alpha'}});
-    sess=await ai.live.connect({model:model,config:{responseModalities:[Modality.AUDIO],systemInstruction:sys,tools:tools,inputAudioTranscription:{},outputAudioTranscription:{}},callbacks:{
+    sess=await ai.live.connect({model:model,config:{responseModalities:[Modality.AUDIO],systemInstruction:sys,tools:tools,inputAudioTranscription:{},outputAudioTranscription:{},realtimeInputConfig:{automaticActivityDetection:{silenceDurationMs:400}}},callbacks:{
       onopen:()=>{connected=true;connecting=false;setStat('pronto','on');},
       onmessage:async m=>{try{await onMsg(m);}catch(e){}},
       onerror:e=>{setStat('erro de conexão');},
@@ -139,16 +143,19 @@ async function connect(){
   try{mic=await navigator.mediaDevices.getUserMedia({audio:true});inCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:16000});const src=inCtx.createMediaStreamSource(mic);proc=inCtx.createScriptProcessor(4096,1,1);src.connect(proc);proc.connect(inCtx.destination);proc.onaudioprocess=ev=>{if(!sending||!sess)return;const f=ev.inputBuffer.getChannelData(0);const pcm=new Int16Array(f.length);for(let i=0;i<f.length;i++){let x=Math.max(-1,Math.min(1,f[i]));pcm[i]=x<0?x*0x8000:x*0x7FFF;}try{sess.sendRealtimeInput({audio:{data:bb64(new Uint8Array(pcm.buffer)),mimeType:'audio/pcm;rate=16000'}});}catch(e){}};}catch(e){setStat('microfone bloqueado');}
   return true;
 }
-const micBtn=$('#mic'),muteBtn=$('#mute');
-let downT=0;const HOLD=450;
+const micBtn=$('#mic'),sendBtn=$('#send'),txt=$('#txt');
+let downT=0,pendingStop=false;const HOLD=450;
 async function ensure(){if(!connected){return await connect();}return true;}
-function startSend(){sending=true;micBtn.classList.add('on');setStat('ouvindo…','rec');muteBtn.style.display='grid';}
-function stopSend(){sending=false;continuous=false;micBtn.classList.remove('on');setStat('mudo','on');}
-micBtn.addEventListener('pointerdown',async e=>{e.preventDefault();downT=Date.now();const ok=await ensure();if(!ok)return;sending=true;micBtn.classList.add('on');setStat('ouvindo…','rec');muteBtn.style.display='grid';});
-micBtn.addEventListener('pointerup',e=>{e.preventDefault();const held=Date.now()-downT;if(held<HOLD){if(continuous){stopSend();}else{continuous=true;sending=true;micBtn.classList.add('on');setStat('conversa contínua — toque p/ parar','rec');}}else{stopSend();}});
-micBtn.addEventListener('pointercancel',()=>{if(!continuous)stopSend();});
-muteBtn.addEventListener('click',()=>{stopSend();});
-$('#txt').addEventListener('keydown',async e=>{if(e.key==='Enter'){const v=e.target.value.trim();if(!v)return;e.target.value='';addUser(v);const ok=await ensure();if(!ok)return;try{sess.sendRealtimeInput({text:v});}catch(err){}}});
+function openMic(){sending=true;micBtn.classList.add('on');setStat('ouvindo…','rec');}
+function closeMic(){if(sending){try{sess.sendRealtimeInput({audioStreamEnd:true});}catch(e){}}sending=false;continuous=false;micBtn.classList.remove('on');setStat('pronto','on');}
+micBtn.addEventListener('pointerdown',async e=>{e.preventDefault();downT=Date.now();if(continuous){pendingStop=true;return;}const ok=await ensure();if(!ok)return;openMic();});
+micBtn.addEventListener('pointerup',e=>{e.preventDefault();const held=Date.now()-downT;if(pendingStop){pendingStop=false;closeMic();return;}if(held<HOLD){continuous=true;setStat('conversa — toque p/ parar','rec');}else{closeMic();}});
+micBtn.addEventListener('pointercancel',()=>{if(!continuous&&sending)closeMic();});
+function swapBtn(){const has=txt.value.trim().length>0;micBtn.style.display=has?'none':'grid';sendBtn.style.display=has?'grid':'none';}
+function sendText(){const v=txt.value.trim();if(!v)return;txt.value='';swapBtn();addUser(v);ensure().then(function(ok){if(ok){try{sess.sendRealtimeInput({text:v});}catch(e){}}});}
+sendBtn.addEventListener('click',sendText);
+txt.addEventListener('input',swapBtn);
+txt.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();sendText();}});
 </script>
 </body>
 </html>
