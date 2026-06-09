@@ -129,13 +129,14 @@ dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
 <div class="appbar">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="74" fill="none" stroke="#E0A93E" stroke-width="3" opacity=".55"/><path d="M78 56 v88 M78 100 L124 56 M84 95 L126 144" stroke="#E0A93E" stroke-width="9" fill="none" stroke-linecap="round"/></svg></div>
-    <div><h1>KRONOS</h1><div class="sub">Centro de Comando · v5</div></div>
+    <div><h1>KRONOS</h1><div class="sub">Centro de Comando · v7</div></div>
   </div>
   <div class="status"><span class="dot load" id="dot"></span><span id="stxt">conectando…</span></div>
 </div>
 
 <div class="wrap">
   <section class="view on" id="v-home">
+    <button onclick="micCheck()" style="width:100%;padding:13px;margin:4px 0 10px;border-radius:12px;background:rgba(224,169,62,.12);color:var(--primary);border:1px solid rgba(224,169,62,.4);font-weight:700;font-size:13px">🎙 Testar microfone ao vivo (Passo 0)</button>
     <div id="home-body"><div class="skel"></div><div class="stats"><div class="skel"></div><div class="skel"></div></div></div>
   </section>
   <section class="view" id="v-aprov">
@@ -273,20 +274,13 @@ function enableDrag(card){
   window.addEventListener('mousemove',move);card.addEventListener('touchmove',move,{passive:true});
   window.addEventListener('mouseup',up);card.addEventListener('touchend',up);
 }
-let pendingCommit=null;
 window.swipe=function(dir){
   const item=swQueue[swIdx]; if(!item)return; curOpt=item.opt; curRich=item.rich;
   const julg = dir==='gostei'?'gostei':'nao';
-  pendingCommit={opt:item.opt,julg:julg,done:false};
+  sendFeedback(item.opt.id, julg, '', '').catch(function(){});
   swIdx++; mountDeck();
   openWhy(item.rich.titulo, item.opt.titulo, julg);
 };
-async function commitJudgement(porque,audio){
-  if(!pendingCommit||pendingCommit.done)return; pendingCommit.done=true;
-  try{ await sendFeedback(pendingCommit.opt.id, pendingCommit.julg, porque||'', audio||''); }
-  catch(e){ pendingCommit.done=false; toast('Falha ao gravar — repita'); throw e; }
-}
-document.getElementById('dlg').addEventListener('close',function(){ if(pendingCommit && !pendingCommit.done) commitJudgement('',''); });
 async function sendFeedback(opcao,julgamento,porque,audio){
   await api('feedback=1',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({opcao:opcao,julgamento:julgamento,porque:porque,audio:audio})});
 }
@@ -297,7 +291,7 @@ window.decide=async function(id,status){
 };
 let mediaRec=null, chunks=[], recBlob=null, recMime='audio/webm', dlgCtx={};
 function openWhy(t,sub,julg){ dlgCtx={julg:julg}; $('#dlg-t').textContent='Por que esse julgamento?'; $('#dlg-s').textContent=(sub?sub+' · ':'')+'diga ou escreva o motivo (opcional)'; $('#dlg-txt').value=''; recBlob=null; $('#dlg-rec').classList.remove('on'); $('#dlg-mic').classList.remove('rec'); $('#dlg').showModal(); }
-$('#dlg-skip').onclick=async function(){ try{ await commitJudgement('',''); }catch(e){} $('#dlg').close(); stopRec(true); toast('✓ Registrado'); };
+$('#dlg-skip').onclick=function(){ $('#dlg').close(); stopRec(true); };
 $('#dlg-mic').onclick=function(){ $('#dlg-file').click(); };
 $('#dlg-file').onchange=function(){ const f=this.files&&this.files[0]; if(!f)return; recBlob=f; recMime=f.type||'audio/mp4'; $('#dlg-rectxt').textContent='áudio gravado ✓ — salvando…'; $('#dlg-rec').classList.add('on'); saveWhy(); };
 let saving=false;
@@ -310,7 +304,7 @@ async function saveWhy(){
       try{ audioUrl=await uploadAudio(recBlob,recMime); }catch(e){ toast('Erro no áudio: '+(e.message||e)); }
       if(audioUrl && !porque){ try{ const tr=await transcribe(recBlob,recMime); if(tr) porque=tr; }catch(e){} }
     }
-    await commitJudgement(porque, audioUrl);
+    if(curOpt) await sendFeedback(curOpt.id, (dlgCtx&&dlgCtx.julg)||'gostei', porque, audioUrl);
     if(porque) toast('✓ Salvo: “'+porque.slice(0,40)+'”');
     else if(audioUrl) toast('✓ Áudio salvo ✓');
     else toast('✓ Registrado');
@@ -383,6 +377,16 @@ function renderPend(){
       '<div class="tx"><div class="a">'+esc(t.titulo)+'</div><div class="c">'+esc(t.codigo||'')+(t.evidencia?' · '+esc(String(t.evidencia).slice(0,60)):'')+'</div></div>'+
       '<span class="chip '+(done?'c-ok':t.status==='em_andamento'?'c-run':'c-pend')+'">'+esc(t.status)+'</span></div>';}).join('')+'</div>';
 }
+window.micCheck=async function(){
+  const out={ua:navigator.userAgent, perm:null, ok:false, standalone:(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone||false};
+  try{ if(navigator.permissions&&navigator.permissions.query){ const p=await navigator.permissions.query({name:'microphone'}); out.perm=p.state; } }catch(e){ out.perm='query_falhou'; }
+  try{
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ out.erro='mediaDevices indisponivel'; }
+    else{ const s=await navigator.mediaDevices.getUserMedia({audio:true}); out.ok=true; const t=s.getAudioTracks()[0]; out.track=t?(t.label||'sem-label'):''; s.getTracks().forEach(function(x){x.stop();}); }
+  }catch(e){ out.ok=false; out.erro=(e.name||'')+': '+(e.message||e); }
+  try{ await fetch(VOZ+'?diag=1&k='+encodeURIComponent(KEY),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(out)}); }catch(e){}
+  alert('Microfone ao vivo: '+(out.ok?'FUNCIONOU ✓':'FALHOU ✗ — '+(out.erro||''))+'\n\nPermissão: '+out.perm+'\nInstalado (standalone): '+out.standalone);
+};
 getState();
 setInterval(function(){ if(document.visibilityState==='visible') getState(); }, 30000);
 document.addEventListener('visibilitychange',function(){ if(document.visibilityState==='visible' && Date.now()-lastOk>15000) getState(); });
