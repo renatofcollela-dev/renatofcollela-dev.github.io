@@ -129,7 +129,7 @@ dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
 <div class="appbar">
   <div class="brand">
     <div class="logo"><svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="74" fill="none" stroke="#E0A93E" stroke-width="3" opacity=".55"/><path d="M78 56 v88 M78 100 L124 56 M84 95 L126 144" stroke="#E0A93E" stroke-width="9" fill="none" stroke-linecap="round"/></svg></div>
-    <div><h1>KRONOS</h1><div class="sub">Centro de Comando · v9</div></div>
+    <div><h1>KRONOS</h1><div class="sub">Centro de Comando · v10</div></div>
   </div>
   <div class="status"><span class="dot load" id="dot"></span><span id="stxt">conectando…</span></div>
 </div>
@@ -406,7 +406,7 @@ import { GoogleGenAI, Modality } from 'https://esm.sh/@google/genai@1.21.0';
 const K=new URLSearchParams(location.search).get('k')||'kx7m2-aprov';
 const VOZ_FN='https://qxfyduqmuemdttrijukg.supabase.co/functions/v1/cockpit_voz';
 const GW2='https://qxfyduqmuemdttrijukg.supabase.co/functions/v1/cockpit';
-let vsession=null,inCtx=null,outCtx=null,proc=null,micStream=null,talking=false,nextT=0,srcs=[];
+let vsession=null,inCtx=null,outCtx=null,proc=null,micStream=null,talking=false,nextT=0,srcs=[],gotAudio=false;
 const vstat=m=>{const e=document.getElementById('voz-status');if(e)e.textContent=m;};
 const vlog=m=>{const e=document.getElementById('voz-log');if(e){e.innerHTML+='<div>'+m+'</div>';e.scrollTop=e.scrollHeight;}};
 function b64b(b){const s=atob(b);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;}
@@ -419,13 +419,13 @@ async function consultar(area){try{const r=await fetch(GW2+'?data=2&k='+encodeUR
  if(area==='agentes')return{agentes:s.agentes};
  if(area==='cobertura')return{cobertura:s.cobertura};
  return{progresso:s.progresso};}catch(e){return{erro:String(e)};}}
-function playPcm(b64){if(!outCtx)return;const u=b64b(b64);const i16=new Int16Array(u.buffer);const f=new Float32Array(i16.length);for(let i=0;i<i16.length;i++)f[i]=i16[i]/32768;const buf=outCtx.createBuffer(1,f.length,24000);buf.getChannelData(0).set(f);const s=outCtx.createBufferSource();s.buffer=buf;s.connect(outCtx.destination);const start=Math.max(outCtx.currentTime,nextT);s.start(start);nextT=start+buf.duration;srcs.push(s);vstat('🔊 falando…');}
+function playPcm(b64,mime){if(!outCtx)return;if(outCtx.state==='suspended'){try{outCtx.resume();}catch(e){}}let rate=24000;if(mime){const m=/rate=(\d+)/.exec(mime);if(m)rate=parseInt(m[1],10);}const u=b64b(b64);const i16=new Int16Array(u.buffer);const f=new Float32Array(i16.length);for(let i=0;i<i16.length;i++)f[i]=i16[i]/32768;const buf=outCtx.createBuffer(1,f.length,rate);buf.getChannelData(0).set(f);const s=outCtx.createBufferSource();s.buffer=buf;s.connect(outCtx.destination);const start=Math.max(outCtx.currentTime,nextT);s.start(start);nextT=start+buf.duration;srcs.push(s);vstat('🔊 falando…');}
 function stopPlay(){srcs.forEach(s=>{try{s.stop();}catch(e){}});srcs=[];nextT=0;}
 async function startVoice(){
  vstat('conectando…');let token,model;
  try{const tr=await fetch(VOZ_FN+'?token=1&k='+encodeURIComponent(K)+'&n='+Date.now());const tj=await tr.json();if(!tj.ok||!tj.name)throw new Error(tj.erro||'sem token');token=tj.name;model=tj.model;}catch(e){vstat('falha no token: '+(e.message||e));return;}
- try{outCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:24000});}catch(e){}
- nextT=0;srcs=[];
+ try{outCtx=new (window.AudioContext||window.webkitAudioContext)({sampleRate:24000});await outCtx.resume();}catch(e){}
+ nextT=0;srcs=[];gotAudio=false;
  const tools=[{functionDeclarations:[{name:'consultar_banco',description:'Consulta o banco da verdade do KRONOS e retorna dados reais. Use SEMPRE antes de afirmar qualquer fato sobre o sistema.',parameters:{type:'OBJECT',properties:{area:{type:'STRING',description:'um de: estado, pendencias, decisoes, falhas, agentes, cobertura'}},required:['area']}}]}];
  const sys='Voce e o KRONOS, sistema de orquestracao soberano, conversando por voz em portugues do Brasil com Renato. Seja conciso, direto, respeitoso e pratico. REGRA ABSOLUTA: nunca invente dados; antes de afirmar qualquer fato sobre o sistema, chame a ferramenta consultar_banco e responda apenas com o que ela retornar. Voce LE e PROPOE; nunca executa acao irreversivel (dinheiro, contrato, publicar) — para isso, oriente Renato a usar o toque no painel.';
  try{const ai=new GoogleGenAI({apiKey:token,httpOptions:{apiVersion:'v1alpha'}});
@@ -433,7 +433,7 @@ async function startVoice(){
    onopen:()=>{vstat('🟢 ouvindo… pode falar');vlog('conectado');},
    onmessage:async msg=>{try{
      const mt=msg.serverContent&&msg.serverContent.modelTurn;
-     if(mt&&mt.parts)for(const p of mt.parts){if(p.inlineData&&p.inlineData.data)playPcm(p.inlineData.data);}
+     if(mt&&mt.parts)for(const p of mt.parts){if(p.inlineData&&p.inlineData.data){if(!gotAudio){gotAudio=true;vlog('🔊 recebendo áudio do KRONOS');}playPcm(p.inlineData.data,p.inlineData.mimeType);}}
      if(msg.serverContent&&msg.serverContent.interrupted){stopPlay();vstat('🟢 ouvindo…');}
      if(msg.serverContent&&msg.serverContent.inputTranscription&&msg.serverContent.inputTranscription.text)vlog('🗣️ você: '+msg.serverContent.inputTranscription.text);
      if(msg.serverContent&&msg.serverContent.outputTranscription&&msg.serverContent.outputTranscription.text)vlog('🤖 KRONOS: '+msg.serverContent.outputTranscription.text);
